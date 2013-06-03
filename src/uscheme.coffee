@@ -5,6 +5,13 @@ class UScheme
     '*': ['prim', (xs) -> (x for x in xs).reduce (x, y) -> x * y],
   }
 
+  lookup: (key, env) ->
+    try
+      alists = (alist for alist in env when key of alist)
+      alists[0][key]
+    catch TypeError
+      throw new Error("couldn't find value to variables:'#{key}'")
+
   listp: (expr) -> Array.isArray expr
 
   nump: (expr) -> (isFinite expr) and not (@listp expr)

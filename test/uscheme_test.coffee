@@ -7,6 +7,13 @@ describe 'UScheme',->
   before ->
     u = new uscheme.UScheme
 
+  describe 'lookup', ->
+    it 'キーに対応する値を返す', ->
+      expect(u.lookup '+', [{'-': 0}, {'+': 1}]).to.be 1
+
+      clj = -> u.lookup '*', [{'-': 0}, {'+': 1}]
+      expect(clj).to.throwError()
+
   describe 'listp', ->
     it '配列の場合は真を返す', ->
       expect(u.listp []).to.be true
