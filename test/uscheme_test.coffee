@@ -19,6 +19,12 @@ describe 'UScheme',->
       clj = -> u.lookup '*', [{'-': 0}, {'+': 1}]
       expect(clj).to.throwError()
 
+  describe 'extend_env', ->
+    it '環境を新たに作って環境の先頭に追加する', ->
+      env = [{'+': 0}]
+      u.extend_env ['-', '*'], [1, 2], env
+      expect(env).to.eql [{'-': 1, '*':2}, {'+': 0}]
+
   describe 'listp', ->
     it '配列の場合は真を返す', ->
       expect(u.listp []).to.be true

@@ -19,6 +19,11 @@ class UScheme
     catch TypeError
       throw new Error("couldn't find value to variables:'#{key}'")
 
+  extend_env: (parameters, args, env) ->
+    new_h = {}
+    (new_h[x[0]] = x[1] for x in @zip parameters, args)
+    env.unshift new_h
+
   listp: (expr) -> Array.isArray expr
 
   nump: (expr) -> (isFinite expr) and not (@listp expr)
