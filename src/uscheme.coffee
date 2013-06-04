@@ -5,6 +5,13 @@ class UScheme
     '*': ['prim', (xs) -> (x for x in xs).reduce (x, y) -> x * y],
   }
 
+  # http://coffeescriptcookbook.com/chapters/arrays/zip-function
+  zip: ->
+    lengthArray = (arr.length for arr in arguments)
+    length = Math.min(lengthArray...)
+    for i in [0...length]
+      arr[i] for arr in arguments
+
   lookup: (key, env) ->
     try
       alists = (alist for alist in env when key of alist)

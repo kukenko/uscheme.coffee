@@ -7,6 +7,11 @@ describe 'UScheme',->
   before ->
     u = new uscheme.UScheme
 
+  describe 'zip', ->
+    it '配列の各要素からなる配列の配列を返す', ->
+      expect(u.zip [0, 1], [2, 3]).to.eql [[0, 2], [1, 3]]
+      expect(u.zip [0, 1, 2], [3, 4]).to.eql [[0, 3], [1, 4]]
+
   describe 'lookup', ->
     it 'キーに対応する値を返す', ->
       expect(u.lookup '+', [{'-': 0}, {'+': 1}]).to.be 1
