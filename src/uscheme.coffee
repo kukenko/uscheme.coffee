@@ -23,6 +23,7 @@ class UScheme
     new_h = {}
     (new_h[x[0]] = x[1] for x in @zip parameters, args)
     env.unshift new_h
+    env
 
   listp: (expr) -> Array.isArray expr
 
@@ -30,26 +31,68 @@ class UScheme
 
   immediatep: (expr) -> @nump expr
 
+  letp: (expr) -> expr[0] == 'let'
+
+  lambdap: (expr) -> expr[0] == 'lambda'
+
+  specialp: (expr) -> @letp(expr) or @lambdap(expr)
+
+  primitivep: (expr) -> expr[0] == 'prim'
+
   car: (list) -> list[0]
 
   cdr: (list) -> list[1..]
 
+  from_let: (expr) ->
+    [(p[0] for p in expr[1]), (a[1] for a in expr[1]), expr[2]]
+
+  from_closure: (expr) -> expr[1..]
+
+  new_closure: (expr, env) ->
+    ['closure', expr[1], expr[2], env]
+
   apply_primitive_fun: (fun, args) -> fun[1] args
 
-  apply: (fun, args) -> @apply_primitive_fun fun, args
+  apply_lambda: (closure, args) ->
+    [p, b, e] = @from_closure closure
+    new_env = @extend_env p, args, e
+    @_eval b, new_env
 
-  eval_list: (expr) ->
-    (@_eval e for e in expr)
+  apply: (fun, args) ->
+    if @primitivep fun
+      @apply_primitive_fun fun, args
+    else
+      @apply_lambda fun, args
 
-  _eval: (expr) ->
+  eval_list: (expr, env) ->
+    (@_eval e, env for e in expr)
+
+  eval_lambda: (expr, env) ->
+    @new_closure expr, env
+
+  eval_let: (expr, env) ->
+    [p, a, b] = @from_let expr
+    new_expr = [['lambda', p, b]].concat a
+    @_eval new_expr, env
+
+  eval_special_form: (expr, env) ->
+    if @lambdap expr
+      @eval_lambda expr, env
+    else if @letp expr
+      @eval_let expr, env
+
+  _eval: (expr, env) ->
     unless @listp expr
       if @immediatep expr
         expr
       else
-        @primitive_fun_env[expr]
+        @lookup expr, env
     else
-      f = @_eval(@car expr)
-      a = @eval_list(@cdr expr)
-      @apply f, a
+      if @specialp expr
+        @eval_special_form expr, env
+      else
+        f = @_eval @car(expr), env
+        a = @eval_list @cdr(expr), env
+        @apply f, a
 
 exports.UScheme = UScheme

@@ -3,9 +3,11 @@ uscheme = require("../src/uscheme")
 
 describe 'UScheme',->
   u = null
+  g = null
 
   before ->
     u = new uscheme.UScheme
+    g = [u.primitive_fun_env]
 
   describe 'zip', ->
     it '配列の各要素からなる配列の配列を返す', ->
@@ -40,6 +42,24 @@ describe 'UScheme',->
       expect(u.immediatep 0).to.be true
       expect(u.immediatep []).not.to.be true
 
+  describe 'letp', ->
+    it 'letの場合は真を返す', ->
+      expect(u.letp ['let', 0, 1]).to.be true
+
+  describe 'lambdap', ->
+    it 'lambdaの場合は真を返す', ->
+      expect(u.lambdap ['lambda', ['x'], ['+', 'x', 1]]).to.be true
+
+  describe 'specialp', ->
+    it 'スペシャルフォームの場合は真を返す', ->
+      expect(u.specialp ['let', 0, 1]).to.be true
+      expect(u.specialp ['lambda', ['x'], ['+', 'x', 1]]).to.be true
+
+  describe 'primitivep', ->
+    it '組み込みの場合は真を返す', ->
+      expect(u.primitivep ['prim']).to.be true
+      expect(u.primitivep ['lambda', ['x'], ['+', 'x', 1]]).not.to.be true
+
   describe 'car', ->
     it '先頭の要素を返す', ->
       expect(u.car [0, 1, 2]).to.be 0
@@ -50,6 +70,24 @@ describe 'UScheme',->
       expect(u.cdr [0, 1, 2]).to.eql [1, 2]
       expect(u.cdr ['a', 'b', 'c']).to.eql ['b', 'c']
       expect(u.cdr []).to.eql []
+
+  describe 'from_let', ->
+    it '仮引数, 引数, 本体を返す', ->
+      [p, a, b] = u.from_let ['let', [['x', 1]], ['+', 'x', 1]]
+      expect(p).to.eql ['x']
+      expect(a).to.eql [1]
+      expect(b).to.eql ['+', 'x', 1]
+
+  describe 'from_closure', ->
+    it '引数, 本体, 環境を返す', ->
+      [p, b, e] = u.from_closure u.new_closure([0, 1, 2], [{}])
+      expect(p).to.eql 1
+      expect(b).to.eql 2
+      expect(e).to.eql [{}]
+
+  describe 'new_closure', ->
+    it 'closureを返す', ->
+      expect(u.new_closure [0, 1, 2], [{}]).to.eql ['closure', 1, 2, [{}]]
 
   describe 'apply_primitive_fun', ->
     it '即値引数を関数へ適用する', ->
@@ -65,10 +103,25 @@ describe 'UScheme',->
 
   describe 'eval_list', ->
     it '評価結果を要素とする配列を返す', ->
-      expect(u.eval_list [1, 2, ['+', 1, 2]]).to.be.eql [1, 2, 3]
+      expect(u.eval_list [1, 2, ['+', 1, 2]], g).to.be.eql [1, 2, 3]
 
   describe '_eval', ->
-    it '式を評価する', ->
-      expect(u._eval ['+', 1, 2, 3]).to.be 6
-      expect(u._eval ['-', 1, 2, 3]).to.be -4
-      expect(u._eval ['+', 1, 2, 3]).to.be 6
+    describe 'primitive', ->
+      it '式を評価する', ->
+        expect(u._eval 0, g).to.be 0
+        expect(u._eval 1, g).to.be 1
+        expect(u._eval ['+', 1, 2, 3], g).to.be 6
+        expect(u._eval ['-', 1, 2, 3], g).to.be -4
+        expect(u._eval ['+', 1, 2, 3], g).to.be 6
+
+    describe 'lambda', ->
+      it '式を評価する', ->
+        expect(u._eval [['lambda', ['x', 'y'], ['+', 'x', 'y']], 1, 2], g).to.be 3
+        expr = [['lambda', ['fun'], ['fun', 88]], ['lambda', ['x'], ['+', 'x', 2]]]
+        expect(u._eval expr, g).to.be 90
+
+    describe 'let', ->
+      it '式を評価する', ->
+        expect(u._eval ['let', [['x', 3]], ['+', 'x', 4]], g).to.be 7
+        expr = ['let', [['x', 3]], [['lambda', ['y'], ['+', 'x', 'y']], 10]]
+        expect(u._eval expr, g).to.be 13
