@@ -7,7 +7,7 @@ describe 'UScheme',->
 
   before ->
     u = new uscheme.UScheme
-    g = [u.primitive_fun_env]
+    g = [u.primitive_fun_env, u.boolean_env]
 
   describe 'zip', ->
     it '配列の各要素からなる配列の配列を返す', ->
@@ -49,11 +49,20 @@ describe 'UScheme',->
     it 'lambdaの場合は真を返す', ->
       expect(u.lambdap ['lambda', ['x'], ['+', 'x', 1]]).to.be true
 
+  describe 'ifp', ->
+    it 'ifの場合は真を返す', ->
+      expect(u.ifp ['if', ['<', 0, 1], [0], [1]]).to.be true
+
+  describe 'letrecp', ->
+    it 'letrecの場合は真を返す', ->
+      expect(u.letrecp ['letrec']).to.be true
+
   describe 'specialp', ->
     it 'スペシャルフォームの場合は真を返す', ->
       expect(u.specialp ['let', 0, 1]).to.be true
       expect(u.specialp ['lambda', ['x'], ['+', 'x', 1]]).to.be true
       expect(u.specialp ['if', ['<', 0, 1], [0], [1]]).to.be true
+      expect(u.specialp ['letrec', 'dummy']).to.be true
 
   describe 'primitivep', ->
     it '組み込みの場合は真を返す', ->
@@ -141,4 +150,13 @@ describe 'UScheme',->
       it '式を評価する', ->
         expect(u._eval ['if', ['<', 0, 1], 0, 1], g).to.be 0
         expect(u._eval ['if', ['>', 0, 1], 0, 1], g).to.be 1
-        expect(u._eval ['if', ['>', 0, 1], 0, [['lambda', ['x'], ['+', 'x', 1]], 1]], g).to.be 2
+        expr = ['if', ['>', 0, 1], 0, [['lambda', ['x'], ['+', 'x', 1]], 1]]
+        expect(u._eval expr, g).to.be 2
+
+    describe 'letrec', ->
+      it '式を評価する', ->
+        expr = ['letrec', [['fact',
+          ['lambda', ['n'], ['if', ['<', 'n', 1],
+            1,
+            ['*', 'n', ['fact', ['-', 'n', 1]]]]]]], ['fact', 4]]
+        expect(u._eval expr, g).to.be 24

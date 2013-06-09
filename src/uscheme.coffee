@@ -9,6 +9,10 @@ class UScheme
     '<=': ['prim', (xs) -> (x for x in xs).reduce (x, y) -> x <= y],
   }
 
+  boolean_env: {
+    'true': true, 'false': false
+  }
+
   # http://coffeescriptcookbook.com/chapters/arrays/zip-function
   zip: ->
     lengthArray = (arr.length for arr in arguments)
@@ -29,6 +33,10 @@ class UScheme
     env.unshift new_h
     env
 
+  extend_env2: (parameters, args, env) ->
+    for p, a in @zip parameters, args
+      env[0][p] = a
+
   listp: (expr) -> Array.isArray expr
 
   nump: (expr) -> (isFinite expr) and not (@listp expr)
@@ -41,10 +49,13 @@ class UScheme
 
   ifp: (expr) -> expr[0] == 'if'
 
+  letrecp: (expr) -> expr[0] == 'letrec'
+
   specialp: (expr) ->
     @letp(expr) or
     @lambdap(expr) or
-    @ifp(expr)
+    @ifp(expr) or
+    @letrecp(expr)
 
   primitivep: (expr) -> expr[0] == 'prim'
 
@@ -58,6 +69,8 @@ class UScheme
   from_closure: (expr) -> expr[1..]
 
   from_if: (expr) -> expr[1..]
+
+  from_letrec: (expr) -> @from_let expr
 
   new_closure: (expr, env) ->
     ['closure', expr[1], expr[2], env]
@@ -93,6 +106,20 @@ class UScheme
     else
       @_eval fc, env
 
+  eval_letrec: (expr, env) ->
+    [params, a, b] = @from_letrec expr
+    tmp_env = {}
+    (tmp_env[param] = 'dummy' for param in params)
+    keys = for key of tmp_env
+      key
+    values = for key, value of tmp_env
+      value
+    ext_env = @extend_env keys, values, env
+    args_val = @eval_list a, ext_env
+    @extend_env2 params, args_val, ext_env
+    new_expr = [['lambda', params, b]].concat a
+    @_eval new_expr, ext_env
+
   eval_special_form: (expr, env) ->
     if @lambdap expr
       @eval_lambda expr, env
@@ -100,6 +127,8 @@ class UScheme
       @eval_let expr, env
     else if @ifp expr
       @eval_if expr, env
+    else if @letrecp expr
+      @eval_letrec expr, env
 
   _eval: (expr, env) ->
     unless @listp expr
