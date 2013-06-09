@@ -17,7 +17,6 @@ describe 'UScheme',->
   describe 'lookup', ->
     it 'キーに対応する値を返す', ->
       expect(u.lookup '+', [{'-': 0}, {'+': 1}]).to.be 1
-
       clj = -> u.lookup '*', [{'-': 0}, {'+': 1}]
       expect(clj).to.throwError()
 
@@ -54,6 +53,7 @@ describe 'UScheme',->
     it 'スペシャルフォームの場合は真を返す', ->
       expect(u.specialp ['let', 0, 1]).to.be true
       expect(u.specialp ['lambda', ['x'], ['+', 'x', 1]]).to.be true
+      expect(u.specialp ['if', ['<', 0, 1], [0], [1]]).to.be true
 
   describe 'primitivep', ->
     it '組み込みの場合は真を返す', ->
@@ -85,6 +85,13 @@ describe 'UScheme',->
       expect(b).to.eql 2
       expect(e).to.eql [{}]
 
+  describe 'from_if', ->
+    it '条件式, True節, False節を返す', ->
+      [cnd, tc, fc] = u.from_if ['if', ['<', 0, 1], [0], [1]]
+      expect(cnd).to.eql ['<', 0, 1]
+      expect(tc).to.eql [0]
+      expect(fc).to.eql [1]
+
   describe 'new_closure', ->
     it 'closureを返す', ->
       expect(u.new_closure [0, 1, 2], [{}]).to.eql ['closure', 1, 2, [{}]]
@@ -113,6 +120,10 @@ describe 'UScheme',->
         expect(u._eval ['+', 1, 2, 3], g).to.be 6
         expect(u._eval ['-', 1, 2, 3], g).to.be -4
         expect(u._eval ['+', 1, 2, 3], g).to.be 6
+        expect(u._eval ['>', 0, 1], g).not.to.be true
+        expect(u._eval ['>=', 0, 1], g).not.to.be true
+        expect(u._eval ['<', 0, 1], g).to.be true
+        expect(u._eval ['<=', 0, 1], g).to.be true
 
     describe 'lambda', ->
       it '式を評価する', ->
@@ -125,3 +136,9 @@ describe 'UScheme',->
         expect(u._eval ['let', [['x', 3]], ['+', 'x', 4]], g).to.be 7
         expr = ['let', [['x', 3]], [['lambda', ['y'], ['+', 'x', 'y']], 10]]
         expect(u._eval expr, g).to.be 13
+
+    describe 'if', ->
+      it '式を評価する', ->
+        expect(u._eval ['if', ['<', 0, 1], 0, 1], g).to.be 0
+        expect(u._eval ['if', ['>', 0, 1], 0, 1], g).to.be 1
+        expect(u._eval ['if', ['>', 0, 1], 0, [['lambda', ['x'], ['+', 'x', 1]], 1]], g).to.be 2

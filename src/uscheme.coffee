@@ -3,6 +3,10 @@ class UScheme
     '+': ['prim', (xs) -> (x for x in xs).reduce (x, y) -> x + y],
     '-': ['prim', (xs) -> (x for x in xs).reduce (x, y) -> x - y],
     '*': ['prim', (xs) -> (x for x in xs).reduce (x, y) -> x * y],
+    '>': ['prim', (xs) -> (x for x in xs).reduce (x, y) -> x > y],
+    '<': ['prim', (xs) -> (x for x in xs).reduce (x, y) -> x < y],
+    '>=': ['prim', (xs) -> (x for x in xs).reduce (x, y) -> x >= y],
+    '<=': ['prim', (xs) -> (x for x in xs).reduce (x, y) -> x <= y],
   }
 
   # http://coffeescriptcookbook.com/chapters/arrays/zip-function
@@ -35,7 +39,12 @@ class UScheme
 
   lambdap: (expr) -> expr[0] == 'lambda'
 
-  specialp: (expr) -> @letp(expr) or @lambdap(expr)
+  ifp: (expr) -> expr[0] == 'if'
+
+  specialp: (expr) ->
+    @letp(expr) or
+    @lambdap(expr) or
+    @ifp(expr)
 
   primitivep: (expr) -> expr[0] == 'prim'
 
@@ -47,6 +56,8 @@ class UScheme
     [(p[0] for p in expr[1]), (a[1] for a in expr[1]), expr[2]]
 
   from_closure: (expr) -> expr[1..]
+
+  from_if: (expr) -> expr[1..]
 
   new_closure: (expr, env) ->
     ['closure', expr[1], expr[2], env]
@@ -75,11 +86,20 @@ class UScheme
     new_expr = [['lambda', p, b]].concat a
     @_eval new_expr, env
 
+  eval_if: (expr, env) ->
+    [cnd, tc, fc] = @from_if expr
+    if @_eval cnd, env
+      @_eval tc, env
+    else
+      @_eval fc, env
+
   eval_special_form: (expr, env) ->
     if @lambdap expr
       @eval_lambda expr, env
     else if @letp expr
       @eval_let expr, env
+    else if @ifp expr
+      @eval_if expr, env
 
   _eval: (expr, env) ->
     unless @listp expr
