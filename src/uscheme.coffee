@@ -34,8 +34,7 @@ class UScheme
     env
 
   extend_env2: (parameters, args, env) ->
-    for p, a in @zip parameters, args
-      env[0][p] = a
+    env[0][p] = a for p, a in @zip parameters, args
 
   listp: (expr) -> Array.isArray expr
 
@@ -43,13 +42,13 @@ class UScheme
 
   immediatep: (expr) -> @nump expr
 
-  letp: (expr) -> expr[0] == 'let'
+  letp: (expr) -> expr[0] is 'let'
 
-  lambdap: (expr) -> expr[0] == 'lambda'
+  lambdap: (expr) -> expr[0] is 'lambda'
 
-  ifp: (expr) -> expr[0] == 'if'
+  ifp: (expr) -> expr[0] is 'if'
 
-  letrecp: (expr) -> expr[0] == 'letrec'
+  letrecp: (expr) -> expr[0] is 'letrec'
 
   specialp: (expr) ->
     @letp(expr) or
@@ -57,7 +56,7 @@ class UScheme
     @ifp(expr) or
     @letrecp(expr)
 
-  primitivep: (expr) -> expr[0] == 'prim'
+  primitivep: (expr) -> expr[0] is 'prim'
 
   car: (list) -> list[0]
 
@@ -110,10 +109,8 @@ class UScheme
     [params, a, b] = @from_letrec expr
     tmp_env = {}
     (tmp_env[param] = 'dummy' for param in params)
-    keys = for key of tmp_env
-      key
-    values = for key, value of tmp_env
-      value
+    keys = (k for k of tmp_env)
+    values = (v for k, v of tmp_env)
     ext_env = @extend_env keys, values, env
     args_val = @eval_list a, ext_env
     @extend_env2 params, args_val, ext_env
