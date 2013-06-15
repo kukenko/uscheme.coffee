@@ -50,11 +50,14 @@ class UScheme
 
   letrecp: (expr) -> expr[0] is 'letrec'
 
+  condp: (expr) -> expr[0] is 'cond'
+
   specialp: (expr) ->
     @letp(expr) or
     @lambdap(expr) or
     @ifp(expr) or
-    @letrecp(expr)
+    @letrecp(expr) or
+    @condp(expr)
 
   primitivep: (expr) -> expr[0] is 'prim'
 
@@ -70,6 +73,16 @@ class UScheme
   from_if: (expr) -> expr[1..]
 
   from_letrec: (expr) -> @from_let expr
+
+  from_cond_to_if: (expr) ->
+    if expr.length is 0
+      []
+    else
+      e = @car expr
+      [p, c] = e
+      if p is 'else'
+        p = 'true'
+      ['if', p, c, @from_cond_to_if(@cdr expr)]
 
   new_closure: (expr, env) ->
     ['closure', expr[1], expr[2], env]
@@ -117,6 +130,10 @@ class UScheme
     new_expr = [['lambda', params, b]].concat a
     @_eval new_expr, ext_env
 
+  eval_cond: (expr, env) ->
+    if_expr = @from_cond_to_if (@cdr expr)
+    @eval_if if_expr, env
+
   eval_special_form: (expr, env) ->
     if @lambdap expr
       @eval_lambda expr, env
@@ -126,6 +143,8 @@ class UScheme
       @eval_if expr, env
     else if @letrecp expr
       @eval_letrec expr, env
+    else if @condp expr
+      @eval_cond expr, env
 
   _eval: (expr, env) ->
     unless @listp expr

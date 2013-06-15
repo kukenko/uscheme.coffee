@@ -58,12 +58,17 @@ describe 'UScheme',->
     it 'letrecの場合は真を返す', ->
       expect(u.letrecp ['letrec']).to.be true
 
+  describe 'condp', ->
+    it 'condの場合は真を返す', ->
+      expect(u.condp ['cond']).to.be true
+
   describe 'specialp', ->
     it 'スペシャルフォームの場合は真を返す', ->
       expect(u.specialp ['let', 0, 1]).to.be true
       expect(u.specialp ['lambda', ['x'], ['+', 'x', 1]]).to.be true
       expect(u.specialp ['if', ['<', 0, 1], [0], [1]]).to.be true
       expect(u.specialp ['letrec', 'dummy']).to.be true
+      expect(u.specialp ['cond', [['>', 1, 1], 1], ['else', -1]]).to.be true
 
   describe 'primitivep', ->
     it '組み込みの場合は真を返す', ->
@@ -101,6 +106,13 @@ describe 'UScheme',->
       expect(cnd).to.eql ['<', 0, 1]
       expect(tc).to.eql [0]
       expect(fc).to.eql [1]
+
+
+  describe 'from_cond_to_if', ->
+    it 'cond式からif式を作成する', ->
+      expr = [[['>', 1, 1], 1], ['else', -1]]
+      e = u.from_cond_to_if expr
+      expect(e).to.eql ['if', ['>', 1, 1], 1, ['if', 'true', -1, []]]
 
   describe 'new_closure', ->
     it 'closureを返す', ->
@@ -161,3 +173,12 @@ describe 'UScheme',->
             1,
             ['*', 'n', ['fact', ['-', 'n', 1]]]]]]], ['fact', 4]]
         expect(ueval expr).to.be 24
+
+    describe 'cond', ->
+      it '式を評価する', ->
+        expr = ['cond',
+          [['>', 1, 1], 1],
+          [['>', 2, 1], 2],
+          [['>', 3, 1], 3],
+          ['else', -1]]
+        expect(ueval expr).to.be 2
