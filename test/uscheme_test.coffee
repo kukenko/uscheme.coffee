@@ -4,7 +4,7 @@ uscheme = require("../src/uscheme")
 describe 'UScheme',->
   u = null
   g = null
-  ueval = (expr) -> u._eval expr, g
+  ueval = (expr) -> u._eval u.parse(expr), g
 
   before ->
     u = new uscheme.UScheme
@@ -141,48 +141,45 @@ describe 'UScheme',->
   describe '_eval', ->
     describe 'primitive', ->
       it '式を評価する', ->
-        expect(ueval 0).to.be 0
-        expect(ueval 1).to.be 1
-        expect(ueval ['+', 1, 2, 3]).to.be 6
-        expect(ueval ['-', 1, 2, 3]).to.be -4
-        expect(ueval ['+', 1, 2, 3]).to.be 6
-        expect(ueval ['>', 0, 1]).not.to.be true
-        expect(ueval ['>=', 0, 1]).not.to.be true
-        expect(ueval ['<', 0, 1]).to.be true
-        expect(ueval ['<=', 0, 1]).to.be true
+        expect(ueval '0').to.be 0
+        expect(ueval '1').to.be 1
+        expect(ueval '(+ 1 2 3)').to.be 6
+        expect(ueval '(- 1 2 3)').to.be -4
+        expect(ueval '(> 0 1)').not.to.be true
+        expect(ueval '(>= 0 1)').not.to.be true
+        expect(ueval '(< 0 1)').to.be true
+        expect(ueval '(<= 0 1)').to.be true
 
     describe 'lambda', ->
       it '式を評価する', ->
-        expect(ueval [['lambda', ['x', 'y'], ['+', 'x', 'y']], 1, 2]).to.be 3
-        expr = [['lambda', ['fun'], ['fun', 88]], ['lambda', ['x'], ['+', 'x', 2]]]
-        expect(ueval expr).to.be 90
+        expect(ueval '((lambda (x y) (+ x y)) 1 2)').to.be 3
+        expect(ueval '((lambda (fun) (fun 88)) (lambda (x) (+ x 2)))').to.be 90
 
     describe 'let', ->
       it '式を評価する', ->
-        expect(ueval ['let', [['x', 3]], ['+', 'x', 4]]).to.be 7
-        expr = ['let', [['x', 3]], [['lambda', ['y'], ['+', 'x', 'y']], 10]]
-        expect(ueval expr).to.be 13
+        expect(ueval '(let ((x 3)) (+ x 4))').to.be 7
+        expect(ueval '(let ((x 3)) ((lambda (y) (+ x y)) 10))').to.be 13
 
     describe 'if', ->
       it '式を評価する', ->
-        expect(ueval ['if', ['<', 0, 1], 0, 1]).to.be 0
-        expect(ueval ['if', ['>', 0, 1], 0, 1]).to.be 1
-        expr = ['if', ['>', 0, 1], 0, [['lambda', ['x'], ['+', 'x', 1]], 1]]
-        expect(ueval expr).to.be 2
+        expect(ueval '(if (< 0 1) 0 1)').to.be 0
+        expect(ueval '(if (> 0 1) 0 1)').to.be 1
+        expect(ueval '(if (> 0 1) 0 ((lambda (x) (+ x 1)) 1))').to.be 2
 
     describe 'letrec', ->
       it '式を評価する', ->
-        expr = ['letrec', [['fact',
-          ['lambda', ['n'], ['if', ['<', 'n', 1],
-            1,
-            ['*', 'n', ['fact', ['-', 'n', 1]]]]]]], ['fact', 4]]
+        expr = '(letrec
+                  ((fact (lambda (n)
+                           (if (< n 1)
+                                1
+                                (* n (fact (- n 1))))))) (fact 4))'
         expect(ueval expr).to.be 24
 
     describe 'cond', ->
       it '式を評価する', ->
-        expr = ['cond',
-          [['>', 1, 1], 1],
-          [['>', 2, 1], 2],
-          [['>', 3, 1], 3],
-          ['else', -1]]
+        expr = '(cond
+                  ((> 1 1) 1)
+                  ((> 2 1) 2)
+                  ((> 3 1) 3)
+                  (else -1))'
         expect(ueval expr).to.be 2
