@@ -27,6 +27,10 @@ class UScheme
     catch TypeError
       throw new Error("couldn't find value to variables:'#{key}'")
 
+  lookup_env: (key, env) ->
+    alists = (alist for alist in env when key of alist)
+    alists[0]
+
   extend_env: (parameters, args, env) ->
     new_h = {}
     (new_h[x[0]] = x[1] for x in @zip parameters, args)
@@ -52,12 +56,15 @@ class UScheme
 
   condp: (expr) -> expr[0] is 'cond'
 
+  definep: (expr) -> expr[0] is 'define'
+
   specialp: (expr) ->
     @letp(expr) or
     @lambdap(expr) or
     @ifp(expr) or
     @letrecp(expr) or
-    @condp(expr)
+    @condp(expr) or
+    @definep(expr)
 
   primitivep: (expr) -> expr[0] is 'prim'
 

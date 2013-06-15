@@ -21,6 +21,10 @@ describe 'UScheme',->
       clj = -> u.lookup '*', [{'-': 0}, {'+': 1}]
       expect(clj).to.throwError()
 
+  describe 'lookup_env', ->
+    it 'キーに対応する環境を返す', ->
+      expect(u.lookup_env '+', [{'-': 0}, {'+': 1}]).to.eql {'+': 1}
+
   describe 'extend_env', ->
     it '環境を新たに作って環境の先頭に追加する', ->
       env = [{'+': 0}]
@@ -62,6 +66,10 @@ describe 'UScheme',->
     it 'condの場合は真を返す', ->
       expect(u.condp ['cond']).to.be true
 
+  describe 'definep', ->
+    it 'defineの場合は真を返す', ->
+      expect(u.definep ['define']).to.be true
+
   describe 'specialp', ->
     it 'スペシャルフォームの場合は真を返す', ->
       expect(u.specialp ['let', 0, 1]).to.be true
@@ -69,6 +77,7 @@ describe 'UScheme',->
       expect(u.specialp ['if', ['<', 0, 1], [0], [1]]).to.be true
       expect(u.specialp ['letrec', 'dummy']).to.be true
       expect(u.specialp ['cond', [['>', 1, 1], 1], ['else', -1]]).to.be true
+      expect(u.specialp ['define', ['id', 'x'], 'x']).to.be true
 
   describe 'primitivep', ->
     it '組み込みの場合は真を返す', ->
