@@ -102,7 +102,7 @@ class UScheme
 
   parse: (expr) ->
     program = expr.replace /^\s+|\s+$/g, ""
-    program = program.replace /[a-zA-Z\-\*><=][0-9a-zA-Z\+\-\=!*]*/g, (m) -> "'#{m}'"
+    program = program.replace /[a-zA-Z\+\-\*><=][0-9a-zA-Z\+\-\=!*]*/g, (m) -> "'#{m}'"
     program = program.replace /\s+/g, ", "
     program = program.replace /\(/g, "["
     program = program.replace /\)/g, "]"
