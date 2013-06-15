@@ -107,7 +107,6 @@ describe 'UScheme',->
       expect(tc).to.eql [0]
       expect(fc).to.eql [1]
 
-
   describe 'from_cond_to_if', ->
     it 'cond式からif式を作成する', ->
       expr = [[['>', 1, 1], 1], ['else', -1]]
@@ -133,6 +132,11 @@ describe 'UScheme',->
   describe 'eval_list', ->
     it '評価結果を要素とする配列を返す', ->
       expect(u.eval_list [1, 2, ['+', 1, 2]], g).to.be.eql [1, 2, 3]
+
+  describe 'parse', ->
+    it 'S式をCoffeeScriptのリテラルに変換する', ->
+      expr = u.parse "(length (list 1 2 3))"
+      expect(expr).to.eql ['length', ['list', 1, 2, 3]]
 
   describe '_eval', ->
     describe 'primitive', ->
