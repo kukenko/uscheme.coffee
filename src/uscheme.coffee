@@ -91,6 +91,14 @@ class UScheme
         p = 'true'
       ['if', p, c, @from_cond_to_if(@cdr expr)]
 
+  from_define: (expr) ->
+    if @listp expr[1]
+      va = @car expr[1]
+      vl = ['lambda', @cdr(expr[1]), expr[2]]
+      [va, vl]
+    else
+      [expr[1], expr[2]]
+
   new_closure: (expr, env) ->
     ['closure', expr[1], expr[2], env]
 

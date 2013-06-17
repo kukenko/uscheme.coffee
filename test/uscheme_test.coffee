@@ -122,6 +122,14 @@ describe 'UScheme',->
       e = u.from_cond_to_if expr
       expect(e).to.eql ['if', ['>', 1, 1], 1, ['if', 'true', -1, []]]
 
+  describe 'from_define', ->
+    it 'define式から変数と値を返す', ->
+      expr = ['define', 'id', ['lambda', ['x'], 'x']]
+      expect(u.from_define expr).to.eql ['id', ['lambda', ['x'], 'x']]
+
+      expr = ['define', ['id', 'x'], 'x']
+      expect(u.from_define expr).to.eql ['id', ['lambda', ['x'], 'x']]
+
   describe 'new_closure', ->
     it 'closureを返す', ->
       expect(u.new_closure [0, 1, 2], [{}]).to.eql ['closure', 1, 2, [{}]]
