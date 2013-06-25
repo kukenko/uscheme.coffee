@@ -157,6 +157,14 @@ class UScheme
     if_expr = @from_cond_to_if (@cdr expr)
     @eval_if if_expr, env
 
+  eval_define: (expr, env) ->
+    [va, vl] = @from_define expr
+    v_ref = @lookup_env(va, env)
+    if v_ref
+      v_ref[va] = @_eval val, env
+    else
+      @extend_env([va], [@_eval vl, env], env)
+
   eval_special_form: (expr, env) ->
     if @lambdap expr
       @eval_lambda expr, env
@@ -168,6 +176,8 @@ class UScheme
       @eval_letrec expr, env
     else if @condp expr
       @eval_cond expr, env
+    else if @definep expr
+      @eval_define expr, env
 
   _eval: (expr, env) ->
     unless @listp expr

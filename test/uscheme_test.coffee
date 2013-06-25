@@ -200,3 +200,9 @@ describe 'UScheme',->
                   ((> 3 1) 3)
                   (else -1))'
         expect(ueval expr).to.be 2
+
+    describe 'define', ->
+      it '式を評価する', ->
+        expr = '(define (id x) x)'
+        ueval expr
+        expect(ueval '(id 10)').to.be 10
