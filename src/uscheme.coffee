@@ -58,13 +58,16 @@ class UScheme
 
   definep: (expr) -> expr[0] is 'define'
 
+  quotep: (expr) -> expr[0] is 'quote'
+
   specialp: (expr) ->
     @letp(expr) or
     @lambdap(expr) or
     @ifp(expr) or
     @letrecp(expr) or
     @condp(expr) or
-    @definep(expr)
+    @definep(expr) or
+    @quotep(expr)
 
   primitivep: (expr) -> expr[0] is 'prim'
 
@@ -165,6 +168,9 @@ class UScheme
     else
       @extend_env([va], [@_eval vl, env], env)
 
+  eval_quote: (expr, env) ->
+    @car (@cdr expr)
+
   eval_special_form: (expr, env) ->
     if @lambdap expr
       @eval_lambda expr, env
@@ -178,6 +184,8 @@ class UScheme
       @eval_cond expr, env
     else if @definep expr
       @eval_define expr, env
+    else if @quotep expr
+      @eval_quote expr, env
 
   _eval: (expr, env) ->
     unless @listp expr

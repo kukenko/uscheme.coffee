@@ -70,6 +70,10 @@ describe 'UScheme',->
     it 'defineの場合は真を返す', ->
       expect(u.definep ['define']).to.be true
 
+  describe 'quotep', ->
+    it 'quoteの場合は真を返す', ->
+      expect(u.quotep ['quote']).to.be true
+
   describe 'specialp', ->
     it 'スペシャルフォームの場合は真を返す', ->
       expect(u.specialp ['let', 0, 1]).to.be true
@@ -78,6 +82,7 @@ describe 'UScheme',->
       expect(u.specialp ['letrec', 'dummy']).to.be true
       expect(u.specialp ['cond', [['>', 1, 1], 1], ['else', -1]]).to.be true
       expect(u.specialp ['define', ['id', 'x'], 'x']).to.be true
+      expect(u.specialp ['quote', [0, 1, 2]]).to.be true
 
   describe 'primitivep', ->
     it '組み込みの場合は真を返す', ->
@@ -208,3 +213,7 @@ describe 'UScheme',->
 
         ueval '(define id (lambda (x) x))'
         expect(ueval '(id 10)').to.be 10
+
+    describe 'quote', ->
+      it '式を評価する', ->
+        expect(ueval '(quote (0 1 2))').to.eql [0, 1, 2]
