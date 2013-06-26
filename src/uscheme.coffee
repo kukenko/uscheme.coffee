@@ -161,7 +161,7 @@ class UScheme
     [va, vl] = @from_define expr
     v_ref = @lookup_env(va, env)
     if v_ref
-      v_ref[va] = @_eval val, env
+      v_ref[va] = @_eval va, env
     else
       @extend_env([va], [@_eval vl, env], env)
 

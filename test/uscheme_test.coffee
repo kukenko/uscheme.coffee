@@ -203,6 +203,8 @@ describe 'UScheme',->
 
     describe 'define', ->
       it '式を評価する', ->
-        expr = '(define (id x) x)'
-        ueval expr
+        ueval '(define (id x) x)'
+        expect(ueval '(id 10)').to.be 10
+
+        ueval '(define id (lambda (x) x))'
         expect(ueval '(id 10)').to.be 10
