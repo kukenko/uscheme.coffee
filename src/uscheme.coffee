@@ -32,17 +32,17 @@ class UScheme
     catch TypeError
       throw new Error("couldn't find value to variables:'#{key}'")
 
-  lookup_env = (key, env) ->
+  lookupEnv = (key, env) ->
     alists = (alist for alist in env when key of alist)
     alists[0]
 
-  extend_env = (parameters, args, env) ->
+  extendEnv = (parameters, args, env) ->
     new_h = {}
     (new_h[x[0]] = x[1] for x in zip parameters, args)
     env.unshift new_h
     env
 
-  extend_env2 = (parameters, args, env) ->
+  extendEnv2 = (parameters, args, env) ->
     env[0][p] = a for p, a in zip parameters, args
 
   listp = (expr) -> Array.isArray expr
@@ -80,16 +80,16 @@ class UScheme
 
   cdr = (list) -> list[1..]
 
-  from_let = (expr) ->
+  fromLet = (expr) ->
     [(p[0] for p in expr[1]), (a[1] for a in expr[1]), expr[2]]
 
-  from_closure = (expr) -> expr[1..]
+  fromClosure = (expr) -> expr[1..]
 
-  from_if = (expr) -> expr[1..]
+  fromIf = (expr) -> expr[1..]
 
-  from_letrec = (expr) -> from_let expr
+  fromLetrec = (expr) -> fromLet expr
 
-  from_cond_to_if = (expr) ->
+  fromCondToIf = (expr) ->
     if expr.length is 0
       []
     else
@@ -97,9 +97,9 @@ class UScheme
       [p, c] = e
       if p is 'else'
         p = 'true'
-      ['if', p, c, from_cond_to_if(cdr expr)]
+      ['if', p, c, fromCondToIf(cdr expr)]
 
-  from_define = (expr) ->
+  fromDefine = (expr) ->
     if listp expr[1]
       va = car expr[1]
       vl = ['lambda', cdr(expr[1]), expr[2]]
@@ -107,81 +107,81 @@ class UScheme
     else
       [expr[1], expr[2]]
 
-  new_closure = (expr, env) ->
+  newClosure = (expr, env) ->
     ['closure', expr[1], expr[2], env]
 
-  apply_primitive_fun = (fun, args) -> fun[1] args
+  applyPrimitiveFun = (fun, args) -> fun[1] args
 
-  apply_lambda = (closure, args) ->
-    [p, b, e] = from_closure closure
-    new_env = extend_env p, args, e
+  applyLambda = (closure, args) ->
+    [p, b, e] = fromClosure closure
+    new_env = extendEnv p, args, e
     UScheme._eval b, new_env
 
   apply = (fun, args) ->
     if primitivep fun
-      apply_primitive_fun fun, args
+      applyPrimitiveFun fun, args
     else
-      apply_lambda fun, args
+      applyLambda fun, args
 
-  eval_list = (expr, env) ->
+  evalList = (expr, env) ->
     (UScheme._eval e, env for e in expr)
 
-  eval_lambda = (expr, env) ->
-    new_closure expr, env
+  evalLambda = (expr, env) ->
+    newClosure expr, env
 
-  eval_let = (expr, env) ->
-    [p, a, b] = from_let expr
+  evalLet = (expr, env) ->
+    [p, a, b] = fromLet expr
     new_expr = [['lambda', p, b]].concat a
     UScheme._eval new_expr, env
 
-  eval_if = (expr, env) ->
-    [cnd, tc, fc] = from_if expr
+  evalIf = (expr, env) ->
+    [cnd, tc, fc] = fromIf expr
     if UScheme._eval cnd, env
       UScheme._eval tc, env
     else
       UScheme._eval fc, env
 
-  eval_letrec = (expr, env) ->
-    [params, a, b] = from_letrec expr
+  evalLetrec = (expr, env) ->
+    [params, a, b] = fromLetrec expr
     tmp_env = {}
     (tmp_env[param] = 'dummy' for param in params)
     keys = (k for k of tmp_env)
     values = (v for k, v of tmp_env)
-    ext_env = extend_env keys, values, env
-    args_val = eval_list a, ext_env
-    extend_env2 params, args_val, ext_env
+    ext_env = extendEnv keys, values, env
+    args_val = evalList a, ext_env
+    extendEnv2 params, args_val, ext_env
     new_expr = [['lambda', params, b]].concat a
     UScheme._eval new_expr, ext_env
 
-  eval_cond = (expr, env) ->
-    if_expr = from_cond_to_if (cdr expr)
-    eval_if if_expr, env
+  evalCond = (expr, env) ->
+    if_expr = fromCondToIf(cdr expr)
+    evalIf if_expr, env
 
-  eval_define = (expr, env) ->
-    [va, vl] = from_define expr
-    v_ref = lookup_env(va, env)
+  evalDefine = (expr, env) ->
+    [va, vl] = fromDefine expr
+    v_ref = lookupEnv(va, env)
     if v_ref
       v_ref[va] = UScheme._eval va, env
     else
-      extend_env([va], [UScheme._eval vl, env], env)
+      extendEnv([va], [UScheme._eval vl, env], env)
 
-  eval_quote = (expr, env) -> car (cdr expr)
+  evalQuote = (expr, env) -> car (cdr expr)
 
-  eval_special_form = (expr, env) ->
+  evalSpecialForm = (expr, env) ->
     if lambdap expr
-      eval_lambda expr, env
+      evalLambda expr, env
     else if letp expr
-      eval_let expr, env
+      evalLet expr, env
     else if ifp expr
-      eval_if expr, env
+      evalIf expr, env
     else if letrecp expr
-      eval_letrec expr, env
+      evalLetrec expr, env
     else if condp expr
-      eval_cond expr, env
+      evalCond expr, env
     else if definep expr
-      eval_define expr, env
+      evalDefine expr, env
     else if quotep expr
-      eval_quote expr, env
+      evalQuote expr, env
 
   @parse = (expr) ->
     program = expr.replace /^\s+|\s+$/g, ""
@@ -199,10 +199,10 @@ class UScheme
         lookup expr, env
     else
       if specialp expr
-        eval_special_form expr, env
+        evalSpecialForm expr, env
       else
         f = UScheme._eval car(expr), env
-        a = eval_list cdr(expr), env
+        a = evalList cdr(expr), env
         apply f, a
 
 exports.UScheme = UScheme
