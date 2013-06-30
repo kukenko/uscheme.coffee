@@ -13,6 +13,11 @@ class UScheme
     'true': true, 'false': false
   }
 
+  list_env: {
+    'car': ['prim', (xs) -> UScheme.car(xs)],
+    'cdr': ['prim', (xs) -> UScheme.cdr(xs)],
+  }
+
   # http://coffeescriptcookbook.com/chapters/arrays/zip-function
   zip: ->
     lengthArray = (arr.length for arr in arguments)
@@ -71,9 +76,9 @@ class UScheme
 
   primitivep: (expr) -> expr[0] is 'prim'
 
-  car: (list) -> list[0]
+  @car: (list) -> list[0]
 
-  cdr: (list) -> list[1..]
+  @cdr: (list) -> list[1..]
 
   from_let: (expr) ->
     [(p[0] for p in expr[1]), (a[1] for a in expr[1]), expr[2]]
@@ -88,16 +93,16 @@ class UScheme
     if expr.length is 0
       []
     else
-      e = @car expr
+      e = UScheme.car expr
       [p, c] = e
       if p is 'else'
         p = 'true'
-      ['if', p, c, @from_cond_to_if(@cdr expr)]
+      ['if', p, c, @from_cond_to_if(UScheme.cdr expr)]
 
   from_define: (expr) ->
     if @listp expr[1]
-      va = @car expr[1]
-      vl = ['lambda', @cdr(expr[1]), expr[2]]
+      va = UScheme.car expr[1]
+      vl = ['lambda', UScheme.cdr(expr[1]), expr[2]]
       [va, vl]
     else
       [expr[1], expr[2]]
@@ -157,7 +162,7 @@ class UScheme
     @_eval new_expr, ext_env
 
   eval_cond: (expr, env) ->
-    if_expr = @from_cond_to_if (@cdr expr)
+    if_expr = @from_cond_to_if (UScheme.cdr expr)
     @eval_if if_expr, env
 
   eval_define: (expr, env) ->
@@ -169,7 +174,7 @@ class UScheme
       @extend_env([va], [@_eval vl, env], env)
 
   eval_quote: (expr, env) ->
-    @car (@cdr expr)
+    UScheme.car (UScheme.cdr expr)
 
   eval_special_form: (expr, env) ->
     if @lambdap expr
@@ -197,8 +202,8 @@ class UScheme
       if @specialp expr
         @eval_special_form expr, env
       else
-        f = @_eval @car(expr), env
-        a = @eval_list @cdr(expr), env
+        f = @_eval UScheme.car(expr), env
+        a = @eval_list UScheme.cdr(expr), env
         @apply f, a
 
 exports.UScheme = UScheme

@@ -8,7 +8,7 @@ describe 'UScheme',->
 
   before ->
     u = new uscheme.UScheme
-    g = [u.primitive_fun_env, u.boolean_env]
+    g = [u.primitive_fun_env, u.boolean_env, u.list_env]
 
   describe 'zip', ->
     it '配列の各要素からなる配列の配列を返す', ->
@@ -91,14 +91,14 @@ describe 'UScheme',->
 
   describe 'car', ->
     it '先頭の要素を返す', ->
-      expect(u.car [0, 1, 2]).to.be 0
-      expect(u.car ['a', 'b', 'c']).to.be 'a'
+      expect(uscheme.UScheme.car [0, 1, 2]).to.be 0
+      expect(uscheme.UScheme.car ['a', 'b', 'c']).to.be 'a'
 
   describe 'cdr', ->
     it '先頭を除いた要素を返す', ->
-      expect(u.cdr [0, 1, 2]).to.eql [1, 2]
-      expect(u.cdr ['a', 'b', 'c']).to.eql ['b', 'c']
-      expect(u.cdr []).to.eql []
+      expect(uscheme.UScheme.cdr [0, 1, 2]).to.eql [1, 2]
+      expect(uscheme.UScheme.cdr ['a', 'b', 'c']).to.eql ['b', 'c']
+      expect(uscheme.UScheme.cdr []).to.eql []
 
   describe 'from_let', ->
     it '仮引数, 引数, 本体を返す', ->
@@ -217,3 +217,11 @@ describe 'UScheme',->
     describe 'quote', ->
       it '式を評価する', ->
         expect(ueval '(quote (0 1 2))').to.eql [0, 1, 2]
+
+    describe 'car', ->
+      it '式を評価する', ->
+        expect(ueval '(car 0 1 2)').to.be 0
+
+    describe 'cdr', ->
+      it '式を評価する', ->
+        expect(ueval '(cdr 0 1 2)').to.eql [1, 2]
