@@ -89,17 +89,6 @@ describe 'UScheme',->
       expect(u.primitivep ['prim']).to.be true
       expect(u.primitivep ['lambda', ['x'], ['+', 'x', 1]]).not.to.be true
 
-  describe 'car', ->
-    it '先頭の要素を返す', ->
-      expect(uscheme.UScheme.car [0, 1, 2]).to.be 0
-      expect(uscheme.UScheme.car ['a', 'b', 'c']).to.be 'a'
-
-  describe 'cdr', ->
-    it '先頭を除いた要素を返す', ->
-      expect(uscheme.UScheme.cdr [0, 1, 2]).to.eql [1, 2]
-      expect(uscheme.UScheme.cdr ['a', 'b', 'c']).to.eql ['b', 'c']
-      expect(uscheme.UScheme.cdr []).to.eql []
-
   describe 'from_let', ->
     it '仮引数, 引数, 本体を返す', ->
       [p, a, b] = u.from_let ['let', [['x', 1]], ['+', 'x', 1]]
@@ -219,9 +208,10 @@ describe 'UScheme',->
         expect(ueval '(quote (0 1 2))').to.eql [0, 1, 2]
 
     describe 'car', ->
-      it '式を評価する', ->
+      it '先頭の要素を返す', ->
         expect(ueval '(car 0 1 2)').to.be 0
 
     describe 'cdr', ->
-      it '式を評価する', ->
+      it '先頭を除いた要素を返す', ->
         expect(ueval '(cdr 0 1 2)').to.eql [1, 2]
+        expect(ueval '(cdr)').to.eql []
