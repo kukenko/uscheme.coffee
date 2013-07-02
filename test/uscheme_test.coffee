@@ -69,6 +69,7 @@ describe 'UScheme',->
         ueval '(define id (lambda (x) x))'
         expect(ueval '(id 10)').to.be 10
 
+        # FIXME: 'lst'を'list'にすると以降のテストが失敗する
         ueval '(define (length lst) (if (null? lst) 0 (+ (length (cdr lst)) 1)))'
         expect(ueval '(length (list 1 2 3))').to.be 3
 
