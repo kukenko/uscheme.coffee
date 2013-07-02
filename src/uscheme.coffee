@@ -14,8 +14,12 @@ class UScheme
   }
 
   list_env: {
+    'nil': ['prim', () -> []],
+    'null?': ['prim', (xs) -> xs[0].length is 0],
+    'cons': ['prim', (xs) -> cons(xs)],
     'car': ['prim', (xs) -> car(xs)],
-    'cdr': ['prim', (xs) -> cdr(xs)],
+    'cdr': ['prim', (xs) -> cdr(xs...)],
+    'list': ['prim', (xs) -> xs],
   }
 
   # http://coffeescriptcookbook.com/chapters/arrays/zip-function
@@ -24,6 +28,10 @@ class UScheme
     length = Math.min(lengthArray...)
     for i in [0...length]
       arr[i] for arr in arguments
+
+  # http://coffeescriptcookbook.com/chapters/arrays/check-type-is-array
+  typeIsArray =
+    Array.isArray || (value) -> return {}.toString.call(value) is '[object Array]'
 
   lookup = (key, env) ->
     try
@@ -78,7 +86,16 @@ class UScheme
 
   car = (list) -> list[0]
 
-  cdr = (list) -> list[1..]
+  cdr = (first, rest...) ->
+    if rest.length is 0
+      if typeIsArray first
+        first[1..]
+      else
+        []
+    else
+      rest
+
+  cons = (list) -> [list[0]].concat list[1]
 
   fromLet = (expr) ->
     [(p[0] for p in expr[1]), (a[1] for a in expr[1]), expr[2]]
@@ -97,12 +114,12 @@ class UScheme
       [p, c] = e
       if p is 'else'
         p = 'true'
-      ['if', p, c, fromCondToIf(cdr expr)]
+      ['if', p, c, fromCondToIf(cdr expr...)]
 
   fromDefine = (expr) ->
     if listp expr[1]
       va = car expr[1]
-      vl = ['lambda', cdr(expr[1]), expr[2]]
+      vl = ['lambda', cdr(expr[1]...), expr[2]]
       [va, vl]
     else
       [expr[1], expr[2]]
@@ -154,18 +171,18 @@ class UScheme
     UScheme._eval new_expr, ext_env
 
   evalCond = (expr, env) ->
-    if_expr = fromCondToIf(cdr expr)
+    if_expr = fromCondToIf(cdr expr...)
     evalIf if_expr, env
 
   evalDefine = (expr, env) ->
     [va, vl] = fromDefine expr
     v_ref = lookupEnv(va, env)
     if v_ref
-      v_ref[va] = UScheme._eval va, env
+      v_ref[va] = UScheme._eval vl, env
     else
       extendEnv([va], [UScheme._eval vl, env], env)
 
-  evalQuote = (expr, env) -> car (cdr expr)
+  evalQuote = (expr, env) -> car (cdr expr...)
 
   evalSpecialForm = (expr, env) ->
     if lambdap expr
@@ -185,7 +202,7 @@ class UScheme
 
   @parse = (expr) ->
     program = expr.replace /^\s+|\s+$/g, ""
-    program = program.replace /[a-zA-Z\+\-\*><=][0-9a-zA-Z\+\-\=!*]*/g, (m) -> "'#{m}'"
+    program = program.replace /[a-zA-Z\+\-\*><=][0-9a-zA-Z\+\-\=\?!*]*/g, (m) -> "'#{m}'"
     program = program.replace /\s+/g, ", "
     program = program.replace /\(/g, "["
     program = program.replace /\)/g, "]"
@@ -202,7 +219,7 @@ class UScheme
         evalSpecialForm expr, env
       else
         f = UScheme._eval car(expr), env
-        a = evalList cdr(expr), env
+        a = evalList cdr(expr...), env
         apply f, a
 
 exports.UScheme = UScheme
