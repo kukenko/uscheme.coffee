@@ -44,16 +44,15 @@ class UScheme
     alists = (alist for alist in env when key of alist)
     alists[0]
 
-  # unShiftNewEnv
-  unShiftNewEnv = (parameters, args, env) ->
+  extendEnv = (parameters, args, env) ->
     new_h = {}
     (new_h[x[0]] = x[1] for x in zip parameters, args)
     [new_h].concat env
 
-  overwriteDummyEnv = (parameters, args, env) ->
+  extendEnv2 = (parameters, args, env) ->
     (env[0][z[0]] = z[1] for z in zip parameters, args)
 
-  pushNewEnv = (parameters, args, env) ->
+  extendEnv3 = (parameters, args, env) ->
     new_h = {}
     (new_h[x[0]] = x[1] for x in zip parameters, args)
     env.unshift new_h
@@ -137,7 +136,7 @@ class UScheme
 
   applyLambda = (closure, args) ->
     [p, b, e] = fromClosure closure
-    new_env = unShiftNewEnv p, args, e
+    new_env = extendEnv p, args, e
     UScheme._eval b, new_env
 
   apply = (fun, args) ->
@@ -170,9 +169,9 @@ class UScheme
     (tmp_env[param] = 'dummy' for param in params)
     keys = (k for k of tmp_env)
     values = (v for k, v of tmp_env)
-    ext_env = unShiftNewEnv keys, values, env
+    ext_env = extendEnv keys, values, env
     args_val = evalList a, ext_env
-    overwriteDummyEnv params, args_val, ext_env
+    extendEnv2 params, args_val, ext_env
     new_expr = [['lambda', params, b]].concat a
     UScheme._eval new_expr, ext_env
 
@@ -186,7 +185,7 @@ class UScheme
     if v_ref
       v_ref[va] = UScheme._eval vl, env
     else
-      pushNewEnv([va], [UScheme._eval vl, env], env)
+      extendEnv3([va], [UScheme._eval vl, env], env)
 
   evalQuote = (expr, env) -> car (cdr expr...)
 
