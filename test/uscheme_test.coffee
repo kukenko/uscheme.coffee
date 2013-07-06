@@ -104,3 +104,93 @@ describe 'UScheme',->
     describe 'null?', ->
       it '空リストの場合は真を返す', ->
         expect(ueval '(null? (nil))').to.be true
+
+    describe 'original', ->
+      it '評価する', ->
+        expr = '((lambda (x) (+ ((lambda (x) x) 2) x)) 1)'
+        expect(ueval expr).to.be 3
+
+        expr = '(let ((x 2) (y 3)) (+ x y))'
+        expect(ueval expr).to.be 5
+
+        expr = '(let ((x 2) (y 3)) ((lambda (x y) (+ x y)) x y))'
+        expect(ueval expr).to.be 5
+
+        expr = '(let ((add (lambda (x y) (+ x y)))) (add 2 3))'
+        expect(ueval expr).to.be 5
+
+        expr = '(if (> 3 2) 1 0)'
+        expect(ueval expr).to.be 1
+
+        expr = '(letrec
+                  ((fact
+                    (lambda (n) (if (< n 1) 1 (* n (fact (- n 1)))))))
+                  (fact 3))'
+        expect(ueval expr).to.be 6
+
+        expr = '(cond
+                  ((< 2 1) 0)
+                  ((< 2 1) 1)
+                  (else 2))'
+        expect(ueval expr).to.be 2
+
+        expr = '(define (length list)
+                  (if (null? list) 0
+                    (+ (length (cdr list)) 1)))'
+        ueval expr
+        expect(ueval '(length (list 1 2))').to.be 2
+
+        ueval '(define (id x) x)'
+        expect(ueval '(id 3)').to.be 3
+
+        expr = '(define x (lambda (x) x))'
+        ueval expr
+        expect(ueval '(x 3)').to.be 3
+
+        ueval '(define x 5)'
+        expect(ueval 'x').to.be 5
+
+        expr = '(let ((x 1))
+                  (let ((dummy (set! x 2)))
+                    x))'
+        expect(ueval expr).to.be 2
+
+        expect(ueval '(list 1)').to.eql [1]
+
+        expr = '(let
+                  ((fact
+                    (lambda (n)
+                      (if (< n 1) 1
+                        (* n
+                          (let
+                            ((fact
+                              (lambda (n) (if (< n 1) 1 (* n (fact (- n 1)))))))
+                            (fact (- n 1))))))))
+                  (fact 1))'
+        expect(ueval expr).to.be 1
+
+        expr = '(let
+                  ((fact
+                    (lambda (n)
+                      (if (< n 1) 1
+                        (* n
+                          (let
+                            ((fact
+                              (lambda (n) (if (< n 1) 1 (* n (fact (- n 1)))))))
+                            (let
+                              ((fact
+                                (lambda (n) (if (< n 1) 1 (* n (fact (- n 1)))))))
+                             (fact (- n 1)))))))))
+                  (fact 2))'
+        expect(ueval expr).to.be 2
+
+        expr = '(define (makecounter)
+                  (let ((count 0))
+                    (lambda ()
+                      (let ((dummy (set! count (+ count 1))))
+                      count))))'
+        ueval expr
+        expr = '(define inc (makecounter))'
+        ueval expr
+        expect(ueval '(inc)').to.be 1
+        expect(ueval '(inc)').to.be 2

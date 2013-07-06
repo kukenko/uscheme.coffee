@@ -44,7 +44,6 @@ class UScheme
     alists = (alist for alist in env when key of alist)
     alists[0]
 
-  # unShiftNewEnv
   unShiftNewEnv = (parameters, args, env) ->
     new_h = {}
     (new_h[x[0]] = x[1] for x in zip parameters, args)
@@ -79,6 +78,8 @@ class UScheme
 
   quotep = (expr) -> expr[0] is 'quote'
 
+  setqp = (expr) -> expr[0] is 'set!'
+
   specialp = (expr) ->
     letp(expr) or
     lambdap(expr) or
@@ -86,7 +87,8 @@ class UScheme
     letrecp(expr) or
     condp(expr) or
     definep(expr) or
-    quotep(expr)
+    quotep(expr) or
+    setqp(expr)
 
   primitivep = (expr) -> expr[0] is 'prim'
 
@@ -129,6 +131,8 @@ class UScheme
       [va, vl]
     else
       [expr[1], expr[2]]
+
+  fromSetq = (expr) -> [expr[1], expr[2]]
 
   newClosure = (expr, env) ->
     ['closure', expr[1], expr[2], env]
@@ -190,6 +194,14 @@ class UScheme
 
   evalQuote = (expr, env) -> car (cdr expr...)
 
+  evalSetq = (expr, env) ->
+    [va, vl] = fromSetq(expr)
+    v_ref = lookupEnv(va, env)
+    if v_ref
+      v_ref[va] = UScheme._eval(vl, env)
+    else
+      throw new Error("undefined variable:'#{va}'")
+
   evalSpecialForm = (expr, env) ->
     if lambdap expr
       evalLambda expr, env
@@ -205,6 +217,8 @@ class UScheme
       evalDefine expr, env
     else if quotep expr
       evalQuote expr, env
+    else if setqp expr
+      evalSetq expr, env
 
   @parse = (expr) ->
     program = expr.replace /^\s+|\s+$/g, ""
